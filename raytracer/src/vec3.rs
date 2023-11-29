@@ -1,3 +1,4 @@
+#[derive(Copy, Clone)]
 pub struct Vec3 {
     x: f64,
     y: f64,
@@ -13,15 +14,9 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
-    pub fn x(&self) -> f64 {
-        self.x
-    }
-    pub fn y(&self) -> f64 {
-        self.y
-    }
-    pub fn z(&self) -> f64 {
-        self.z
-    }
+    pub fn x(&self) -> f64 { self.x }
+    pub fn y(&self) -> f64 { self.y }
+    pub fn z(&self) -> f64 { self.z }
 
     pub fn get(&self, index: usize) -> Option<f64> {
         match index {
@@ -49,6 +44,9 @@ impl Vec3 {
     }
     pub fn abs2(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+    pub fn unit(&self) -> Vec3 {
+        self.clone() / self.abs()
     }
 }
 
@@ -98,6 +96,17 @@ impl Mul<f64> for Vec3 {
             x: self.x * scalar, 
             y: self.y * scalar, 
             z: self.z * scalar,
+        }
+    }
+}
+impl Mul<Vec3> for f64 {
+    type Output = Vec3;
+
+    fn mul(self: f64, vec3: Vec3) -> Vec3 {
+        Vec3 {
+            x: vec3.x * self,
+            y: vec3.y * self,
+            z: vec3.z * self,
         }
     }
 }
