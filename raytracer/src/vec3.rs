@@ -5,6 +5,8 @@ pub struct Vec3 {
     z: f64,
 }
 
+pub type Point3 = Vec3;
+
 #[allow(dead_code)]
 impl Vec3 {
     pub fn new() -> Vec3 {
@@ -43,7 +45,7 @@ impl Vec3 {
         self.abs2().sqrt()
     }
     pub fn abs2(&self) -> f64 {
-        self.x * self.x + self.y * self.y + self.z * self.z
+        self.dot(&self)
     }
     pub fn unit(&self) -> Vec3 {
         self.clone() / self.abs()
