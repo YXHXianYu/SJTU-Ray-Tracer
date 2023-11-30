@@ -4,58 +4,32 @@ use std::fs::File;
 use indicatif::ProgressBar;
 
 mod vec3;
-use vec3::Vec3;
-use vec3::Point3;
-
 mod ray;
-use ray::Ray;
-
 mod color;
+mod hittable;
+mod hittable_list;
+mod sphere;
+mod utils;
+
+// use vec3::Vec3;
+// use vec3::Point3;
+// use ray::Ray;
+use utils::*;
 use color::{ Color, ppm_header, write_color };
+use hittable_list::HittableList;
+use sphere::Sphere;
 
 fn main() {
-    let mut file = file_setup("output/book1/image5.ppm");
+    let mut out = file_setup("output/book1/image5.ppm");
 
     let image_size = image_setup();
     let camera = camera_setup(&image_size);
 
     let progress = progress_bar_setup(image_size.height);
 
-    render(&image_size, &camera, &mut file, &progress);
+    let world = world_setup();
 
-    std::process::exit(0);
-}
-
-fn hit_sphere(center: &Vec3, radius: f64, ray: &Ray) -> f64 {
-    // 推导公式如下: [RayTracer](https://raytracing.github.io/books/RayTracingInOneWeekend.html#addingasphere)
-    let co = *ray.origin() - *center;
-    let a = ray.direction().abs2();
-    let half_b = co.dot(&ray.direction());
-    let c = co.abs2() - radius*radius;
-    let discriminant = half_b * half_b - a * c;
-    
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-half_b - discriminant.sqrt()) / a
-    }
-}
-
-fn ray_color(ray: &Ray) -> Color {
-    let center = Point3::from(0.0, 0.0, -1.0);
-    let t = hit_sphere(&center, 0.5, ray);
-    if t > 0.0 {
-        let normal = (ray.at(t) - center).unit();
-        return 0.5 * Color::from(normal.x() + 1 as f64, normal.y() + 1 as f64, normal.z() + 1 as f64);
-    }
-
-    let unit_direction = ray.direction().unit();
-    let a = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - a) * Color::from(1.0, 1.0, 1.0) + a * Color::from(0.5, 0.7, 1.0)
-}
-
-fn render(image_size: &ImageSize, camera: &Camera, out: &mut dyn Write, progress: &ProgressBar) {
-    ppm_header(out, image_size.width, image_size.height);
+    ppm_header(&mut out, image_size.width, image_size.height);
 
     for j in 0..image_size.height {
         for i in 0..image_size.width {
@@ -64,16 +38,38 @@ fn render(image_size: &ImageSize, camera: &Camera, out: &mut dyn Write, progress
 
             let ray = Ray::from(camera.camera_center, ray_direction);
 
-            let pixel_color = ray_color(&ray);
+            let pixel_color = ray_color(&ray, &world);
 
-            write_color(out, pixel_color);
+            write_color(&mut out, pixel_color);
         }
         progress.inc(1);
     }
     progress.finish();
+
+    std::process::exit(0);
+}
+
+fn ray_color(ray: &Ray, world: &HittableList) -> Color {
+
+    if let Some(x) = world.hit(ray, 0.0, f64::INFINITY) {
+        return 0.5 * (x.normal + Color::from(1.0, 1.0, 1.0));
+    }
+
+    let unit_direction = ray.direction().unit();
+    let a = 0.5 * (unit_direction.y() + 1.0);
+    (1.0 - a) * Color::from(1.0, 1.0, 1.0) + a * Color::from(0.5, 0.7, 1.0)
 }
 
 // === Setup ===
+
+fn world_setup() -> HittableList {
+    let mut world = HittableList::new();
+
+    world.add(Box::new(Sphere::from(Point3::from(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::from(Point3::from(0.0, -100.5, -1.0), 100.0)));
+
+    world
+}
 
 fn file_setup(path_str: &str) -> File {
     let path = std::path::Path::new(path_str);
