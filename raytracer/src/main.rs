@@ -9,18 +9,19 @@ mod color;
 mod hittable;
 mod hittable_list;
 mod sphere;
-mod utils;
+mod common;
+mod interval;
 
 // use vec3::Vec3;
 // use vec3::Point3;
 // use ray::Ray;
-use utils::*;
+use common::*;
 use color::{ Color, ppm_header, write_color };
 use hittable_list::HittableList;
 use sphere::Sphere;
 
 fn main() {
-    let mut out = file_setup("output/book1/image5.ppm");
+    let mut out = file_setup("output/book1/image6.ppm");
 
     let image_size = image_setup();
     let camera = camera_setup(&image_size);
@@ -50,8 +51,7 @@ fn main() {
 }
 
 fn ray_color(ray: &Ray, world: &HittableList) -> Color {
-
-    if let Some(x) = world.hit(ray, 0.0, f64::INFINITY) {
+    if let Some(x) = world.hit(ray, &Interval::from(0.0, f64::INFINITY)) {
         return 0.5 * (x.normal + Color::from(1.0, 1.0, 1.0));
     }
 

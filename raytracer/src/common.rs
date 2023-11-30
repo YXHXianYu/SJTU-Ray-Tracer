@@ -1,6 +1,7 @@
 pub use crate::vec3::*;
 pub use crate::ray::*;
-pub use crate::utils::consts::*;
+pub use crate::interval::*;
+pub use crate::common::consts::*;
 
 mod consts {
     pub const PI: f64 = std::f64::consts::PI;
