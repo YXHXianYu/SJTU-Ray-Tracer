@@ -3,6 +3,7 @@ pub struct Interval {
     pub max: f64
 }
 
+#[allow(dead_code)]
 impl Interval {
     pub fn new() -> Interval {
         Interval::empty()

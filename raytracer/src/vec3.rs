@@ -1,3 +1,5 @@
+use rand::Rng;
+
 #[derive(Copy, Clone)]
 pub struct Vec3 {
     x: f64,
@@ -14,6 +16,29 @@ impl Vec3 {
     }
     pub fn from(x: f64, y: f64, z: f64) -> Vec3 {
         Vec3 { x, y, z }
+    }
+    pub fn random(range: std::ops::Range<f64>) -> Vec3 {
+        let rd = || rand::thread_rng().gen_range(range.clone());
+        Vec3 { x: rd(), y: rd(), z: rd() }
+    }
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let x = Vec3::random(-1.0..1.0);
+            if x.abs2() < 1.0 {
+                return x;
+            }
+        }
+    }
+    pub fn random_unit_vector() -> Vec3 {
+        Vec3::random_in_unit_sphere().unit()
+    }
+    pub fn random_on_hemisphere(normal: Vec3) -> Vec3 {
+        let unit = Vec3::random_unit_vector();
+        if unit.dot(&normal) > 0.0 {
+            unit
+        } else {
+            -unit
+        }
     }
 
     pub fn x(&self) -> f64 { self.x }

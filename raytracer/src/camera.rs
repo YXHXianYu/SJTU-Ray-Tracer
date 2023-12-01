@@ -3,12 +3,11 @@ use rand::Rng;
 use std::fs::File;
 
 use crate::common::*;
-use crate::hittable::HitRecord;
 use crate::hittable_list::HittableList;
 
 pub struct Camera {
     // === Hyper Parameters ===
-    aspect_ratio:      f64, // Ratio of image width over height
+    // aspect_ratio:      f64, // Ratio of image width over height
     image_width :      u32, // Rendered image width in pixel count
     samples_per_pixel: u32, // The number of samples per pixel
 
@@ -22,6 +21,7 @@ pub struct Camera {
 
 }
 
+#[allow(dead_code)]
 impl Camera {
     // === Public ===
     pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32) -> Camera {
@@ -44,7 +44,7 @@ impl Camera {
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         Camera {
-            aspect_ratio,
+            // aspect_ratio,
             image_width,
             image_height,
             center,
@@ -62,7 +62,7 @@ impl Camera {
         for j in 0..self.image_height {
             for i in 0..self.image_width {
                 let mut pixel_color = Color::from(0.0, 0.0, 0.0);
-                for k in 0..self.samples_per_pixel {
+                for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i, j);
                     pixel_color += Camera::ray_color(&ray, world);
                 }
@@ -82,10 +82,9 @@ impl Camera {
 
     // === Private ===
     fn ray_color(ray: &Ray, world: &HittableList) -> Color {
-        let hit_record = HitRecord::new();
-
         if let Some(x) = world.hit(ray, &Interval::from(0.0, INFINITY)) {
-            return 0.5 * (x.normal + Color::from(1.0, 1.0, 1.0));
+            let direction = Vec3::random_on_hemisphere(x.normal);
+            return 0.5 * Camera::ray_color(&Ray::from(x.point, direction), world);
         }
 
         let unit_direction = ray.direction().unit();

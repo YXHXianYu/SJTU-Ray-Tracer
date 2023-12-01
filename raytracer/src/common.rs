@@ -11,6 +11,7 @@ mod consts {
 
 // === Utility Function ===
 
+#[allow(dead_code)]
 pub fn degrees_to_radians(degrees: f64) -> f64 {
-    degrees * PI / 180.0
+    degrees * consts::PI / 180.0
 }
