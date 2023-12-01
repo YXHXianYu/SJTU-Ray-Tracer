@@ -2,5 +2,6 @@
     "rust-analyzer.linkedProjects": [
         "./raytracer/Cargo.toml",
         "./raytracer/Cargo.toml"
-    ]
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
 }
