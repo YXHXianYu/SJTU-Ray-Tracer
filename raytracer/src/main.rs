@@ -17,14 +17,15 @@ mod interval;
 mod camera;
 
 fn main() {
-    let mut out = file_setup("output/book1/image7.ppm");
+    let mut out = file_setup("output/book1/image13.ppm");
 
     let mut world = HittableList::new();
     world.add(Box::new(Sphere::from(Point3::from(0.0, 0.0, -1.0), 0.5)));
     world.add(Box::new(Sphere::from(Point3::from(0.0, -100.5, -1.0), 100.0)));
 
-    let camera = Camera::new(16.0 / 9.0, 400, 10);
+    let camera = Camera::new(16.0 / 9.0, 720, 20, 50);
     let mut progress = progress_bar_setup(camera.image_height());
+
     camera.render(&world, &mut out, &mut progress);
 
     std::process::exit(0);

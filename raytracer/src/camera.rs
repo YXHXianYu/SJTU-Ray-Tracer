@@ -10,6 +10,7 @@ pub struct Camera {
     // aspect_ratio:      f64, // Ratio of image width over height
     image_width :      u32, // Rendered image width in pixel count
     samples_per_pixel: u32, // The number of samples per pixel
+    max_depth:         u32, // Maximum number of ray bounces
 
     // === Derived Parameters ===
     image_height:      u32, // Rendered image height
@@ -17,14 +18,12 @@ pub struct Camera {
     pixel00_loc:    Point3, // Location of pixel(0, 0)
     pixel_delta_u:    Vec3, // Offset to pixel to the right
     pixel_delta_v:    Vec3, // Offset to pixel to below
-
-
 }
 
 #[allow(dead_code)]
 impl Camera {
     // === Public ===
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32) -> Camera {
+    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, max_depth: u32) -> Camera {
         
         let image_height = std::cmp::max(1, (image_width as f64 / aspect_ratio) as u32);
 
@@ -52,6 +51,7 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             samples_per_pixel,
+            max_depth,
         }
     }
 
@@ -64,7 +64,7 @@ impl Camera {
                 let mut pixel_color = Color::from(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&ray, world);
+                    pixel_color += Camera::ray_color(&ray, self.max_depth, world);
                 }
                 write_color(out, pixel_color, self.samples_per_pixel);
             }
@@ -81,10 +81,15 @@ impl Camera {
     }
 
     // === Private ===
-    fn ray_color(ray: &Ray, world: &HittableList) -> Color {
-        if let Some(x) = world.hit(ray, &Interval::from(0.0, INFINITY)) {
-            let direction = Vec3::random_on_hemisphere(x.normal);
-            return 0.5 * Camera::ray_color(&Ray::from(x.point, direction), world);
+    fn ray_color(ray: &Ray, depth: u32, world: &HittableList) -> Color {
+        if depth <= 0 {
+            return Color::from(0.0, 0.0, 0.0);
+        }
+
+        if let Some(x) = world.hit(ray, &Interval::from(0.001, INFINITY)) {
+            let direction = x.normal + Vec3::random_on_hemisphere(x.normal);
+            // why x.normal occurs here? because of Lambertian Reflection (b1-9.4)
+            return 0.5 * Camera::ray_color(&Ray::from(x.point, direction), depth - 1, world);
         }
 
         let unit_direction = ray.direction().unit();
