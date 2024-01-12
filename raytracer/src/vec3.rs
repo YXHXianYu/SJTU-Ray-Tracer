@@ -1,5 +1,7 @@
 use rand::Rng;
 
+use crate::common::*;
+
 #[derive(Copy, Clone)]
 pub struct Vec3 {
     x: f64,
@@ -41,6 +43,10 @@ impl Vec3 {
         }
     }
 
+    pub fn reflect(ray: Vec3, normal: Vec3) -> Vec3 {
+        ray - 2.0 * ray.dot(&normal) * normal
+    }
+
     pub fn x(&self) -> f64 { self.x }
     pub fn y(&self) -> f64 { self.y }
     pub fn z(&self) -> f64 { self.z }
@@ -74,6 +80,10 @@ impl Vec3 {
     }
     pub fn unit(&self) -> Vec3 {
         self.clone() / self.abs()
+    }
+
+    pub fn is_zero(&self) -> bool {
+        sign(self[0]) == 0 && sign(self[1]) == 0 && sign(self[2]) == 0
     }
 }
 

@@ -87,9 +87,15 @@ impl Camera {
         }
 
         if let Some(x) = world.hit(ray, &Interval::from(0.001, INFINITY)) {
-            let direction = x.normal + Vec3::random_on_hemisphere(x.normal);
-            // why x.normal occurs here? because of Lambertian Reflection (b1-9.4)
-            return 0.5 * Camera::ray_color(&Ray::from(x.point, direction), depth - 1, world);
+            if let Some((attenuation, scattered)) = x.material.scatter(ray, &x) {
+                return attenuation * Camera::ray_color(&scattered, depth-1, world);
+            } else {
+                return Color::from(0.0, 0.0, 0.0);
+            }
+
+            // let direction = x.normal + Vec3::random_on_hemisphere(x.normal);
+            // // why x.normal occurs here? because of Lambertian Reflection (book 1 - 9.4)
+            // return 0.5 * Camera::ray_color(&Ray::from(x.point, direction), depth - 1, world);
         }
 
         let unit_direction = ray.direction().unit();

@@ -1,16 +1,24 @@
+use std::rc::Rc;
+
 use crate::common::*;
 use crate::hittable::{ Hittable, HitRecord };
 use crate::vec3::Point3;
 use crate::ray::Ray;
+use crate::material::Material;
 
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Rc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn from(center: Point3, radius: f64) -> Sphere {
-        Sphere { center, radius }
+    pub fn from(
+        center: Point3,
+        radius: f64,
+        material: Rc<dyn Material>,
+    ) -> Sphere {
+        Sphere { center, radius, material }
     }
 }
 
@@ -29,18 +37,24 @@ impl Hittable for Sphere {
         // second check maxz intersection
         let r1 = (-half_b - sqrtd) / a;
         let r2 = (-half_b + sqrtd) / a;
-        let mut hit_record = HitRecord::new();
+        let t;
         if ray_t.surrounds(r1) {
-            hit_record.t = r1;
+            t = r1;
         } else if ray_t.surrounds(r2) {
-            hit_record.t = r2;
+            t = r2;
         } else {
             return None;
         }
         
-        hit_record.point = ray.at(hit_record.t);
-        let outward_normal = (hit_record.point - self.center) / self.radius;
-        hit_record.set_face_normal(ray, &outward_normal);
+        let point = ray.at(t);
+        let outward_normal = (point - self.center) / self.radius;
+        let hit_record = HitRecord::from(
+            point,
+            ray,
+            &outward_normal,
+            t,
+            Rc::clone(&self.material)
+        );
 
         Some(hit_record)
     }
