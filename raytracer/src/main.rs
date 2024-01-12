@@ -26,7 +26,7 @@ fn main() {
     let material_ground = Rc::new(Lambertian::from(&Color::from(0.8, 0.8, 0.0)));
     let material_center = Rc::new(Lambertian::from(&Color::from(0.7, 0.3, 0.3)));
     let material_left = Rc::new(Metal::from(&Color::from(0.8, 0.8, 0.8), 0.3));
-    let material_right = Rc::new(Metal::from(&Color::from(0.8, 0.6, 0.2), 1.0));
+    let material_right = Rc::new(Metal::from(&Color::from(0.8, 0.6, 0.2), 0.0));
 
     let mut world = HittableList::new();
     world.add(Box::new(Sphere::from(Point3::from(0.0, -100.5, -1.0), 100.0, material_ground)));
