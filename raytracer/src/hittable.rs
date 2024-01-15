@@ -26,7 +26,7 @@ impl HitRecord {
         let normal = if front_face {
             *outward_normal
         } else {
-            *outward_normal
+            -*outward_normal
         };
 
         HitRecord {
