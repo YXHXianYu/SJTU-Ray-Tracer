@@ -81,3 +81,43 @@ impl Material for Metal {
     }
 }
 
+// === Dielectric ===
+
+pub struct Dielectric {
+    index_of_refraction: f64,
+}
+
+impl Dielectric {
+    pub fn from(index_of_refraction: f64) -> Dielectric {
+        Dielectric {
+            index_of_refraction
+        }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        hit_record: &HitRecord,
+    ) -> Option<(Color, Ray)> {
+        let refraction_ratio = if hit_record.front_face { 1.0 / self.index_of_refraction } else { self.index_of_refraction };
+        let r = r_in.direction().unit();
+
+        let cos_theta = (-r).dot(&hit_record.normal).min(1.0);
+        let sin_theta = 1.0 - cos_theta.powi(2);
+
+        let can_refract = refraction_ratio * sin_theta <= 1.0;
+
+        let refracted = if can_refract {
+            Vec3::refract(r, hit_record.normal, refraction_ratio)
+        } else {
+            Vec3::reflect(r, hit_record.normal)
+        };
+
+        return Some((
+            Color::from(1.0, 1.0, 1.0),
+            Ray::from(hit_record.point, refracted),
+        ))
+    }
+}
