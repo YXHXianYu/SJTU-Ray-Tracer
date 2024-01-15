@@ -26,7 +26,7 @@ impl HitRecord {
         let normal = if front_face {
             *outward_normal
         } else {
-            -*outward_normal
+            *outward_normal
         };
 
         HitRecord {
@@ -37,15 +37,6 @@ impl HitRecord {
             material,
         }
     }
-
-    // pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
-    //     self.front_face = ray.direction().dot(&outward_normal) < 0.0;
-    //     self.normal = if self.front_face {
-    //         *outward_normal
-    //     } else {
-    //         -*outward_normal
-    //     };
-    // }
 }
 
 pub trait Hittable {

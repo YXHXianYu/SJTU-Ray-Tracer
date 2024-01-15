@@ -43,8 +43,15 @@ impl Vec3 {
         }
     }
 
-    pub fn reflect(ray: Vec3, normal: Vec3) -> Vec3 {
-        ray - 2.0 * ray.dot(&normal) * normal
+    pub fn reflect(r: Vec3, n: Vec3) -> Vec3 {
+        r - 2.0 * r.dot(&n) * n
+    }
+
+    pub fn refract(r: Vec3, n: Vec3, eta_ratio: f64) -> Vec3 {
+        let cos_theta = (-r).dot(&n).min(1.0);
+        let r_out_perp = eta_ratio * (r + cos_theta * n);
+        let r_out_parallel = -(1.0 - r_out_perp.abs2()).max(0.0).sqrt() * n;
+        r_out_perp + r_out_parallel
     }
 
     pub fn x(&self) -> f64 { self.x }

@@ -1,3 +1,5 @@
+pub use std::cmp;
+
 pub use crate::color::*;
 pub use crate::interval::*;
 pub use crate::ray::*;
