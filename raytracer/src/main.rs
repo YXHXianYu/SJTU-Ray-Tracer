@@ -27,7 +27,7 @@ mod material;
 fn main() {
     let args: Vec<String> = env::args().collect(); 
     let path = if args.len() == 1 {
-        "output/book1/image18.ppm"
+        "output/book1/tmp.jpg"
     } else if args.len() == 2 {
         &args[1]
     } else {
@@ -44,10 +44,11 @@ fn main() {
     let mut world = HittableList::new();
     world.add(Box::new(Sphere::from(Point3::from(0.0, -100.5, -1.0), 100.0, material_ground)));
     world.add(Box::new(Sphere::from(Point3::from(0.0, 0.0, -1.0),    0.5,   material_center)));
-    world.add(Box::new(Sphere::from(Point3::from(-1.0, 0.0, -1.0),   0.5,   material_left)));
+    world.add(Box::new(Sphere::from(Point3::from(-1.0, 0.0, -1.0),   0.5,   material_left.clone())));
+    world.add(Box::new(Sphere::from(Point3::from(-1.0, 0.0, -1.0),   -0.4,  material_left)));
     world.add(Box::new(Sphere::from(Point3::from(1.0, 0.0, -1.0),    0.5,   material_right)));
 
-    let camera = Camera::new(16.0 / 9.0, 720, 10, 30);
+    let camera = Camera::new(16.0 / 9.0, 720, 20, 30);
     // let camera = Camera::new(16.0 / 9.0, 400, 10, 10);
     let mut progress = progress_bar_setup(camera.image_height());
 
