@@ -8,7 +8,6 @@ use crate::hittable_list::HittableList;
 
 pub struct Camera {
     // === Hyper Parameters ===
-    // aspect_ratio:      f64, // Ratio of image width over height
     image_width :      u32, // Rendered image width in pixel count
     samples_per_pixel: u32, // The number of samples per pixel
     max_depth:         u32, // Maximum number of ray bounces
@@ -21,17 +20,29 @@ pub struct Camera {
     pixel_delta_v:    Vec3, // Offset to pixel to below
 }
 
+pub struct CameraCreateInfo {
+    pub samples_per_pixel: u32,
+    pub max_depth: u32,
+    pub aspect_ratio: f64,
+    pub image_width: u32,
+    pub vfov: f64,
+}
+
 #[allow(dead_code)]
 impl Camera {
     // === Public ===
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, max_depth: u32) -> Camera {
+    // pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, max_depth: u32) -> Camera {
+    pub fn new(info: CameraCreateInfo) -> Camera {
         
-        let image_height = std::cmp::max(1, (image_width as f64 / aspect_ratio) as u32);
+        let image_width = info.image_width;
+        let image_height = std::cmp::max(1, (image_width as f64 / info.aspect_ratio) as u32);
 
         let center = Point3::from(0.0, 0.0,  0.0);
 
         let focal_length = 1.0;
-        let viewport_height = 2.0;
+        let theta = degrees_to_radians(info.vfov);
+        let h = (theta/2.0).tan();
+        let viewport_height = 2.0 * h * focal_length; // MARK: ??
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
 
         let viewport_u = Vec3::from(viewport_width, 0.0, 0.0);
@@ -42,6 +53,9 @@ impl Camera {
 
         let viewport_upper_left = center - Vec3::from(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+        let samples_per_pixel = info.samples_per_pixel;
+        let max_depth = info.max_depth;
 
         Camera {
             // aspect_ratio,
