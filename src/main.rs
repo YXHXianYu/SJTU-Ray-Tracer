@@ -16,6 +16,7 @@ use std::fs::File;
 use indicatif::ProgressBar;
 use console::style;
 use image::{ ImageBuffer, RgbImage };
+use rand::Rng;
 
 use common::*;
 use sphere::Sphere;
@@ -36,19 +37,24 @@ fn main() {
     let mut output_file = file_setup(path);
 
     let camera = Camera::new(CameraCreateInfo{
-        camera_position: Vec3::from(-2.0, 2.0, 1.0),
-        look_at: Vec3::from(0.0, 0.0, -1.0),
+        samples_per_pixel: 500,
+        max_depth: 50,
+        image_width: 400,
+
+        camera_position: Vec3::from(13.0, 2.0, 3.0),
+        look_at: Vec3::from(0.0, 0.0, 0.0),
         vfov: 20.0,
-        defocus_angle: 10.0,
-        focus_dist: 3.4,
+
+        defocus_angle: 0.6,
+        focus_dist: 10.0,
+
         ..Default::default()
     });
     let mut progress = progress_bar_setup(camera.image_height());
 
     let mut img: RgbImage = ImageBuffer::new(camera.image_width(), camera.image_height());
 
-    let world = get_world1();
-    // let world = get_world2();
+    let world = get_world3();
 
     camera.render(&world, &mut img, &mut progress);
 
@@ -112,6 +118,61 @@ fn get_world2() -> HittableList {
 
     world.add(Box::new(Sphere::from(Point3::from(-r, 0.0, -1.0), r, material_left)));
     world.add(Box::new(Sphere::from(Point3::from( r, 0.0, -1.0), r, material_right)));
+
+    world
+}
+
+#[allow(dead_code)]
+fn get_world3() -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground_material = Rc::new(Lambertian::from(&Color::from(0.5, 0.5, 0.5)));
+    world.add(Box::new(Sphere::from(Point3::from(0.0, -1000.0, 0.0), 1000.0, ground_material)));
+
+    let mut rng = rand::thread_rng();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rng.gen::<f64>();
+            let center = Vec3::from(
+                a as f64 + 0.9 * rng.gen::<f64>(),
+                0.2,
+                b as f64 + 0.9 * rng.gen::<f64>(),
+            );
+
+            if (center - Vec3::from(4.0, 0.2, 0.0)).abs2() > 0.81 {
+                if choose_mat < 0.8 {
+                    // diffuse
+                    let albedo = Color::random(0.0..1.0) * Color::random(0.0..1.0);
+                    let mat = Rc::new(Lambertian::from(&albedo));
+                    world.add(Box::new(Sphere::from(center, 0.2, mat)));
+
+                } else if choose_mat < 0.95 {
+                    // metal
+                    let albedo = Color::random(0.5..1.0);
+                    let fuzz = rng.gen_range(0.0..0.5);
+                    let mat = Rc::new(Metal::from(&albedo, fuzz));
+                    world.add(Box::new(Sphere::from(center, 0.2, mat)));
+
+                } else {
+                    // glass
+                    let mat = Rc::new(Dielectric::from(1.5));
+                    world.add(Box::new(Sphere::from(center, 0.2, mat)));
+
+                }
+            }
+        }
+    }
+
+    let mat1 = Rc::new(Dielectric::from(1.5));
+    world.add(Box::new(Sphere::from(Vec3::from(0.0, 1.0, 0.0), 1.0, mat1)));
+
+    let mat2 = Rc::new(Lambertian::from(&Color::from(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::from(Vec3::from(-4.0, 1.0, 0.0), 1.0, mat2)));
+
+    let mat3 = Rc::new(Metal::from(&Color::from(0.7, 0.6, 0.5), 0.0));
+    world.add(Box::new(Sphere::from(Vec3::from(4.0, 1.0, 0.0), 1.0, mat3)));
+
 
     world
 }
