@@ -12,6 +12,7 @@ mod material;
 use std::rc::Rc;
 use std::env;
 use std::fs::File;
+use std::time::Instant;
 
 use indicatif::ProgressBar;
 use console::style;
@@ -56,7 +57,9 @@ fn main() {
 
     let world = get_world3();
 
+    let t = Instant::now();
     camera.render(&world, &mut img, &mut progress);
+    println!("done! cost: {:?}", t.elapsed());
 
     println!(
         "Ouput image as \"{}\"",
