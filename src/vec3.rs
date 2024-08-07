@@ -31,6 +31,15 @@ impl Vec3 {
             }
         }
     }
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let mut x = Vec3::random(-1.0..1.0);
+            x.z = 0.0;
+            if x.abs2() < 1.0 {
+                return x;
+            }
+        }
+    }
     pub fn random_unit_vector() -> Vec3 {
         Vec3::random_in_unit_sphere().unit()
     }

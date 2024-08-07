@@ -36,17 +36,19 @@ fn main() {
     let mut output_file = file_setup(path);
 
     let camera = Camera::new(CameraCreateInfo{
-        samples_per_pixel: 10,
-        max_depth: 10,
-        aspect_ratio: 16.0 / 9.0,
-        image_width: 400,
-        vfov: 90.0,
+        camera_position: Vec3::from(-2.0, 2.0, 1.0),
+        look_at: Vec3::from(0.0, 0.0, -1.0),
+        vfov: 20.0,
+        defocus_angle: 10.0,
+        focus_dist: 3.4,
+        ..Default::default()
     });
     let mut progress = progress_bar_setup(camera.image_height());
 
     let mut img: RgbImage = ImageBuffer::new(camera.image_width(), camera.image_height());
 
-    let world = get_world2();
+    let world = get_world1();
+    // let world = get_world2();
 
     camera.render(&world, &mut img, &mut progress);
 
