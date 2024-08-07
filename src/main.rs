@@ -63,7 +63,7 @@ fn main() {
         style(path).yellow()
     );
     let output_image = image::DynamicImage::ImageRgb8(img);
-    match output_image.write_to(&mut output_file, image::ImageOutputFormat::Jpeg(100)) {
+    match output_image.write_to(&mut output_file, image::ImageFormat::Jpeg) {
         Ok(_) => {}
         Err(_) => println!("{}", style("Outputting image fails.").red()),
     }
