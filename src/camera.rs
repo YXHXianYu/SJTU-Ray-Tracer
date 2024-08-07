@@ -1,7 +1,10 @@
+use std::sync::{Arc, Mutex};
+
 use indicatif::ProgressBar;
 use rand::Rng;
 
 use image::RgbImage;
+use rayon::iter::ParallelIterator;
 
 use crate::common::*;
 use crate::hittable_list::HittableList;
@@ -125,24 +128,25 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, world: &HittableList, img: &mut RgbImage, progress: &mut ProgressBar) {
+    pub fn render(&self, world: Arc<HittableList>, img: &mut RgbImage, progress: Arc<Mutex<ProgressBar>>) {
 
         // ppm_header(out, self.image_width, self.image_height);
 
-        for j in (0..self.image_height).rev() {
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::from(0.0, 0.0, 0.0);
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&ray, self.max_depth, world);
-                }
-                // write_color(out, pixel_color, self.samples_per_pixel);
-                let pixel = img.get_pixel_mut(i, j);
-                *pixel = image::Rgb(transform_color(pixel_color, self.samples_per_pixel));
+        let _world = world.clone();
+        let _progress = progress.clone();
+        img.par_enumerate_pixels_mut().for_each(move |(i, j, pixel)| {
+            let mut pixel_color = Color::from(0.0, 0.0, 0.0);
+            for _ in 0..self.samples_per_pixel {
+                let ray = self.get_ray(i, j);
+                let _world = _world.clone();
+                pixel_color += Camera::ray_color(&ray, self.max_depth, _world);
             }
-            progress.inc(1);
-        }
-        progress.finish();
+            // write_color(out, pixel_color, self.samples_per_pixel);
+            *pixel = image::Rgb(transform_color(pixel_color, self.samples_per_pixel));
+            _progress.lock().unwrap().inc(1);
+        });
+
+        progress.lock().unwrap().finish();
     }
 
     pub fn image_height(&self) -> u32 {
@@ -153,12 +157,12 @@ impl Camera {
     }
 
     // === Private ===
-    fn ray_color(ray: &Ray, depth: u32, world: &HittableList) -> Color {
+    fn ray_color<W: AsRef<HittableList>>(ray: &Ray, depth: u32, world: W) -> Color {
         if depth <= 0 {
             return Color::from(0.0, 0.0, 0.0);
         }
 
-        if let Some(x) = world.hit(ray, &Interval::from(0.001, INFINITY)) {
+        if let Some(x) = world.as_ref().hit(ray, &Interval::from(0.001, INFINITY)) {
             if let Some((attenuation, scattered)) = x.material.scatter(ray, &x) {
                 return attenuation * Camera::ray_color(&scattered, depth-1, world);
             } else {

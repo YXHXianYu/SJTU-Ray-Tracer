@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::common::*;
 use crate::hittable::{ Hittable, HitRecord };
@@ -9,14 +9,14 @@ use crate::material::Material;
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    material: Rc<dyn Material>,
+    material: Arc<dyn Material + Send + Sync>,
 }
 
 impl Sphere {
     pub fn from(
         center: Point3,
         radius: f64,
-        material: Rc<dyn Material>,
+        material: Arc<dyn Material + Send + Sync>,
     ) -> Sphere {
         Sphere { center, radius, material }
     }
@@ -53,7 +53,7 @@ impl Hittable for Sphere {
             ray,
             &outward_normal,
             t,
-            Rc::clone(&self.material)
+            Arc::clone(&self.material)
         );
 
         Some(hit_record)
