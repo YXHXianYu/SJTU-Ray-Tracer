@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::common::*;
 use crate::ray::Ray;
@@ -10,7 +10,7 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub front_face: bool,
     pub t: f64,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material + Send + Sync>,
 }
 
 impl HitRecord {
@@ -19,7 +19,7 @@ impl HitRecord {
         ray: &Ray, 
         outward_normal: &Vec3,
         t: f64,
-        material: Rc<dyn Material>,
+        material: Arc<dyn Material + Send + Sync>,
     ) -> HitRecord {
 
         let front_face = ray.direction().dot(&outward_normal) < 0.0;

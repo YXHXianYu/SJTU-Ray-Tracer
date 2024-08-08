@@ -9,9 +9,11 @@ mod interval;
 mod camera;
 mod material;
 
-use std::rc::Rc;
 use std::env;
 use std::fs::File;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Instant;
 
 use indicatif::ProgressBar;
 use console::style;
@@ -50,20 +52,22 @@ fn main() {
 
         ..Default::default()
     });
-    let mut progress = progress_bar_setup(camera.image_height());
+    let progress = progress_bar_setup(camera.image_height() * camera.image_width());
 
     let mut img: RgbImage = ImageBuffer::new(camera.image_width(), camera.image_height());
 
     let world = get_world3();
 
-    camera.render(&world, &mut img, &mut progress);
+    let t = Instant::now();
+    camera.render(Arc::new(world), &mut img, Arc::new(Mutex::new(progress)));
+    println!("done! cost: {:?}", t.elapsed());
 
     println!(
         "Ouput image as \"{}\"",
         style(path).yellow()
     );
     let output_image = image::DynamicImage::ImageRgb8(img);
-    match output_image.write_to(&mut output_file, image::ImageOutputFormat::Jpeg(100)) {
+    match output_image.write_to(&mut output_file, image::ImageFormat::Jpeg) {
         Ok(_) => {}
         Err(_) => println!("{}", style("Outputting image fails.").red()),
     }
@@ -81,20 +85,20 @@ fn file_setup(path_str: &str) -> File {
     File::create(path).unwrap()
 }
 
-fn progress_bar_setup(height: u32) -> ProgressBar {
+fn progress_bar_setup(total: u32) -> ProgressBar {
     if option_env!("CI").unwrap_or_default() == "true" {
         ProgressBar::hidden()
     } else {
-        ProgressBar::new((height) as u64)
+        ProgressBar::new((total) as u64)
     }
 }
 
 #[allow(dead_code)]
 fn get_world1() -> HittableList {
-    let material_ground = Rc::new(Lambertian::from(&Color::from(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(Lambertian::from(&Color::from(0.1, 0.2, 0.5)));
-    let material_left   = Rc::new(Dielectric::from(1.5));
-    let material_right  = Rc::new(Metal::from(&Color::from(0.8, 0.6, 0.2), 0.0));
+    let material_ground = Arc::new(Lambertian::from(&Color::from(0.8, 0.8, 0.0)));
+    let material_center = Arc::new(Lambertian::from(&Color::from(0.1, 0.2, 0.5)));
+    let material_left   = Arc::new(Dielectric::from(1.5));
+    let material_right  = Arc::new(Metal::from(&Color::from(0.8, 0.6, 0.2), 0.0));
 
     let mut world = HittableList::new();
 
@@ -111,8 +115,8 @@ fn get_world1() -> HittableList {
 fn get_world2() -> HittableList {
     let r = (PI/4.0).cos();
 
-    let material_left =Rc::new(Lambertian::from(&Color::from(0.0,0.0,1.0)));
-    let material_right=Rc::new(Lambertian::from(&Color::from(1.0,0.0,0.0)));
+    let material_left =Arc::new(Lambertian::from(&Color::from(0.0,0.0,1.0)));
+    let material_right=Arc::new(Lambertian::from(&Color::from(1.0,0.0,0.0)));
 
     let mut world = HittableList::new();
 
@@ -126,7 +130,7 @@ fn get_world2() -> HittableList {
 fn get_world3() -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material = Rc::new(Lambertian::from(&Color::from(0.5, 0.5, 0.5)));
+    let ground_material = Arc::new(Lambertian::from(&Color::from(0.5, 0.5, 0.5)));
     world.add(Box::new(Sphere::from(Point3::from(0.0, -1000.0, 0.0), 1000.0, ground_material)));
 
     let mut rng = rand::thread_rng();
@@ -144,19 +148,19 @@ fn get_world3() -> HittableList {
                 if choose_mat < 0.8 {
                     // diffuse
                     let albedo = Color::random(0.0..1.0) * Color::random(0.0..1.0);
-                    let mat = Rc::new(Lambertian::from(&albedo));
+                    let mat = Arc::new(Lambertian::from(&albedo));
                     world.add(Box::new(Sphere::from(center, 0.2, mat)));
 
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random(0.5..1.0);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    let mat = Rc::new(Metal::from(&albedo, fuzz));
+                    let mat = Arc::new(Metal::from(&albedo, fuzz));
                     world.add(Box::new(Sphere::from(center, 0.2, mat)));
 
                 } else {
                     // glass
-                    let mat = Rc::new(Dielectric::from(1.5));
+                    let mat = Arc::new(Dielectric::from(1.5));
                     world.add(Box::new(Sphere::from(center, 0.2, mat)));
 
                 }
@@ -164,13 +168,13 @@ fn get_world3() -> HittableList {
         }
     }
 
-    let mat1 = Rc::new(Dielectric::from(1.5));
+    let mat1 = Arc::new(Dielectric::from(1.5));
     world.add(Box::new(Sphere::from(Vec3::from(0.0, 1.0, 0.0), 1.0, mat1)));
 
-    let mat2 = Rc::new(Lambertian::from(&Color::from(0.4, 0.2, 0.1)));
+    let mat2 = Arc::new(Lambertian::from(&Color::from(0.4, 0.2, 0.1)));
     world.add(Box::new(Sphere::from(Vec3::from(-4.0, 1.0, 0.0), 1.0, mat2)));
 
-    let mat3 = Rc::new(Metal::from(&Color::from(0.7, 0.6, 0.5), 0.0));
+    let mat3 = Arc::new(Metal::from(&Color::from(0.7, 0.6, 0.5), 0.0));
     world.add(Box::new(Sphere::from(Vec3::from(4.0, 1.0, 0.0), 1.0, mat3)));
 
 
