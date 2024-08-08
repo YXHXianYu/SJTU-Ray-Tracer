@@ -41,7 +41,8 @@ fn main() {
     let camera = Camera::new(CameraCreateInfo{
         samples_per_pixel: 500,
         max_depth: 50,
-        image_width: 400,
+        image_width: 1920,
+        // 400 * 400 * 9/16 ==> 1080 * 1920
 
         camera_position: Vec3::from(13.0, 2.0, 3.0),
         look_at: Vec3::from(0.0, 0.0, 0.0),
